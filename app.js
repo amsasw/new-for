@@ -16,96 +16,92 @@ const countryButtons = [...document.querySelectorAll('.country-btn')];
 
 const countries = {
   CN: {
-    language: 'zh',
     htmlLang: 'zh-CN',
     locale: 'zh-CN',
-    label: '🇨🇳 中国',
-    title: '中国热点',
-    eyebrow: 'CHINA · DAILY NEWS',
-    description: '每天生成一次新闻缓存；切换国家即可查看对应地区的本地化热点。',
-    metaDescription: '中国每日热点新闻聚合',
+    label: '🇨🇳 中国 · Tech',
+    title: '中国技术资讯',
+    eyebrow: 'CHINA · TECH & CODE',
+    description: '聚合中国科技、编程、开源、AI、云计算和开发者工具相关内容，每 24 小时更新一次缓存。',
+    metaDescription: '中国科技、编程、开源、AI 与开发者资讯聚合',
     refresh: '重新读取缓存',
     loading: '读取中…',
-    reading: '正在读取中国新闻缓存…',
+    reading: '正在读取中国技术资讯缓存…',
     source: '查看原文 ↗',
-    empty: '没有找到中国新闻。',
-    fresh: '正在展示中国每日新闻缓存',
-    stale: '中国新闻本次更新失败，正在展示上次成功缓存',
+    empty: '没有找到中国技术资讯。',
+    fresh: '正在展示中国技术资讯缓存',
+    stale: '中国技术资讯本次更新失败，正在展示上次成功缓存',
     updatedAt: '缓存更新时间',
     noCache: '尚未生成缓存',
     loadFailed: '缓存加载失败',
-    search: '搜索标题或媒体来源…',
-    searchLabel: '搜索中国新闻',
-    results: n => `${n} 条新闻`
+    search: '搜索编程、AI、开源或媒体来源…',
+    searchLabel: '搜索中国技术资讯',
+    results: n => `${n} 条技术资讯`
   },
   US: {
-    language: 'en',
     htmlLang: 'en',
     locale: 'en-US',
-    label: '🇺🇸 USA',
-    title: 'U.S. News',
-    eyebrow: 'UNITED STATES · DAILY NEWS',
-    description: 'A daily cached view of U.S. headlines. Switch countries to browse their localized news feeds.',
-    metaDescription: 'Daily U.S. headline aggregator',
+    label: '🇺🇸 USA · Tech',
+    title: 'U.S. Tech & Code',
+    eyebrow: 'UNITED STATES · TECH & CODE',
+    description: 'Developer-focused U.S. technology coverage: programming, open source, AI, cloud, software engineering and developer tools.',
+    metaDescription: 'U.S. programming, open-source, AI and developer news',
     refresh: 'Reload cache',
     loading: 'Loading…',
-    reading: 'Reading U.S. news cache…',
+    reading: 'Reading U.S. tech cache…',
     source: 'Read source ↗',
-    empty: 'No U.S. news found.',
-    fresh: 'Showing the daily U.S. news cache',
-    stale: 'U.S. refresh failed; showing the last successful cache',
+    empty: 'No U.S. developer or tech stories found.',
+    fresh: 'Showing the U.S. tech & code cache',
+    stale: 'U.S. tech refresh failed; showing the last successful cache',
     updatedAt: 'Cache updated',
     noCache: 'No cache has been generated yet',
     loadFailed: 'Failed to load cache',
-    search: 'Search headlines or publishers…',
-    searchLabel: 'Search U.S. news',
-    results: n => `${n} stor${n === 1 ? 'y' : 'ies'}`
+    search: 'Search programming, AI, open source or publishers…',
+    searchLabel: 'Search U.S. tech stories',
+    results: n => `${n} tech stor${n === 1 ? 'y' : 'ies'}`
   },
   JP: {
-    language: 'ja',
     htmlLang: 'ja',
     locale: 'ja-JP',
-    label: '🇯🇵 日本',
-    title: '日本ニュース',
-    eyebrow: 'JAPAN · DAILY NEWS',
-    description: 'ニュースキャッシュを1日1回生成します。国を切り替えると、その地域のニュースを表示します。',
-    metaDescription: '日本のデイリーニュース集約',
+    label: '🇯🇵 日本 · Tech',
+    title: '日本の技術情報',
+    eyebrow: 'JAPAN · TECH & CODE',
+    description: '日本のプログラミング、オープンソース、AI、クラウド、ソフトウェア開発、開発者ツールの情報を集約します。',
+    metaDescription: '日本のプログラミング・OSS・AI・開発者向け技術情報',
     refresh: 'キャッシュを再読込',
     loading: '読込中…',
-    reading: '日本ニュースのキャッシュを読込中…',
+    reading: '日本の技術情報キャッシュを読込中…',
     source: '記事を読む ↗',
-    empty: '日本のニュースが見つかりません。',
-    fresh: '日本の日次ニュースキャッシュを表示中',
-    stale: '日本ニュースの更新に失敗したため、前回のキャッシュを表示中',
+    empty: '日本の技術情報が見つかりません。',
+    fresh: '日本の技術情報キャッシュを表示中',
+    stale: '日本の技術情報更新に失敗したため、前回のキャッシュを表示中',
     updatedAt: 'キャッシュ更新日時',
     noCache: 'まだキャッシュが生成されていません',
     loadFailed: 'キャッシュの読込に失敗しました',
-    search: '見出し・メディアを検索…',
-    searchLabel: '日本ニュースを検索',
-    results: n => `${n}件のニュース`
+    search: 'プログラミング・AI・OSS・媒体を検索…',
+    searchLabel: '日本の技術情報を検索',
+    results: n => `${n}件の技術情報`
   },
   KR: {
-    language: 'ko',
     htmlLang: 'ko',
     locale: 'ko-KR',
-    label: '🇰🇷 한국',
-    title: '한국 뉴스',
-    eyebrow: 'SOUTH KOREA · DAILY NEWS',
-    description: '하루에 한 번 뉴스 캐시를 생성합니다. 국가를 전환하면 해당 지역의 뉴스를 볼 수 있습니다.',
-    metaDescription: '한국 일일 뉴스 모음',
+    label: '🇰🇷 한국 · Tech',
+    title: '한국 기술 소식',
+    eyebrow: 'SOUTH KOREA · TECH & CODE',
+    description: '한국의 프로그래밍, 오픈소스, AI, 클라우드, 소프트웨어 개발 및 개발자 도구 관련 정보를 모읍니다.',
+    metaDescription: '한국 프로그래밍·오픈소스·AI·개발자 기술 정보 모음',
     refresh: '캐시 다시 읽기',
     loading: '불러오는 중…',
-    reading: '한국 뉴스 캐시를 읽는 중…',
+    reading: '한국 기술 정보 캐시를 읽는 중…',
     source: '원문 보기 ↗',
-    empty: '한국 뉴스를 찾을 수 없습니다.',
-    fresh: '한국 일일 뉴스 캐시 표시 중',
-    stale: '한국 뉴스 업데이트에 실패해 마지막 성공 캐시를 표시 중',
+    empty: '한국 개발자 기술 정보를 찾을 수 없습니다.',
+    fresh: '한국 기술 정보 캐시 표시 중',
+    stale: '한국 기술 정보 업데이트에 실패해 마지막 성공 캐시를 표시 중',
     updatedAt: '캐시 업데이트',
     noCache: '아직 생성된 캐시가 없습니다',
     loadFailed: '캐시를 불러오지 못했습니다',
-    search: '제목 또는 언론사 검색…',
-    searchLabel: '한국 뉴스 검색',
-    results: n => `${n}개 뉴스`
+    search: '프로그래밍, AI, 오픈소스 또는 매체 검색…',
+    searchLabel: '한국 기술 정보 검색',
+    results: n => `${n}개 기술 소식`
   }
 };
 
@@ -164,7 +160,7 @@ function getVisibleItems() {
     .filter(item => item.country === selectedCountry)
     .filter(item => {
       if (!query) return true;
-      const haystack = [item.title, item.summary, item.source, item.author]
+      const haystack = [item.title, item.summary, item.source, item.author, ...(item.tags || [])]
         .filter(Boolean)
         .join(' ')
         .toLocaleLowerCase(c().locale);
@@ -195,7 +191,7 @@ function render() {
         <div class="rank">${String(index + 1).padStart(2, '0')}</div>
         <div class="content">
           <div class="meta">
-            <span class="source">${escapeHtml(item.source || 'News')}</span>
+            <span class="source">${escapeHtml(item.source || 'Tech')}</span>
             <time datetime="${escapeHtml(item.publishedAt || '')}">${relativeTime(item.publishedAt)}</time>
           </div>
           <h2><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a></h2>
