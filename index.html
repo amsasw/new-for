@@ -4,16 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hot Cache Hub</title>
-  <meta name="description" content="每天更新一次缓存的热点聚合页" />
+  <meta id="metaDescription" name="description" content="每天更新一次缓存的热点聚合页" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <main class="shell">
+    <div class="topbar">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="lang-btn active" data-lang="zh">中</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="ko">한국어</button>
+      </div>
+    </div>
+
     <header class="hero">
       <div>
         <div class="eyebrow">DAILY CACHE FEED</div>
-        <h1>最新热点</h1>
-        <p>每 24 小时生成一次缓存；抓取失败时继续展示上次成功缓存。</p>
+        <h1 id="pageTitle">最新热点</h1>
+        <p id="pageDescription">每 24 小时生成一次缓存；抓取失败时继续展示上次成功缓存。</p>
       </div>
       <button id="refreshBtn" class="refresh">重新读取缓存</button>
     </header>
@@ -25,7 +34,7 @@
     </section>
 
     <section class="toolbar">
-      <button class="chip active" data-source="all">全部</button>
+      <button class="chip active" data-source="all" id="allSourceBtn">全部</button>
       <button class="chip" data-source="Hacker News">Hacker News</button>
       <button class="chip" data-source="DEV Community">DEV</button>
     </section>
