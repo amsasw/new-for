@@ -1,4 +1,4 @@
-name: Refresh country news and deploy Pages
+name: Refresh country tech feeds and deploy Pages
 
 on:
   push:
@@ -34,8 +34,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/hotspots.json
-          key: country-news-${{ github.run_id }}
+          key: country-tech-${{ github.run_id }}
           restore-keys: |
+            country-tech-
             country-news-
             hotspots-
 
@@ -44,13 +45,13 @@ jobs:
         shell: bash
         run: |
           VERSION="$(node -e "try{const j=require('./data/hotspots.json');process.stdout.write(String(j.meta?.schemaVersion||0))}catch{process.stdout.write('0')}")"
-          if [ "$VERSION" != "2" ]; then
+          if [ "$VERSION" != "3" ]; then
             echo "refresh=true" >> "$GITHUB_OUTPUT"
           else
             echo "refresh=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Refresh country news
+      - name: Refresh country tech feeds
         if: github.event_name != 'push' || steps.schema.outputs.refresh == 'true'
         run: npm run refresh
 
@@ -59,7 +60,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data/hotspots.json
-          key: country-news-${{ github.run_id }}
+          key: country-tech-${{ github.run_id }}
 
       - name: Build static site
         run: npm run build
