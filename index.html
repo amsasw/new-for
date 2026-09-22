@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hot Cache Hub</title>
+  <meta name="description" content="每天更新一次缓存的热点聚合页" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">DAILY CACHE FEED</div>
+        <h1>最新热点</h1>
+        <p>每 24 小时生成一次缓存；抓取失败时继续展示上次成功缓存。</p>
+      </div>
+      <button id="refreshBtn" class="refresh">重新读取缓存</button>
+    </header>
+
+    <section class="statusbar">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText">正在读取缓存…</span>
+      <span id="updatedAt" class="muted"></span>
+    </section>
+
+    <section class="toolbar">
+      <button class="chip active" data-source="all">全部</button>
+      <button class="chip" data-source="Hacker News">Hacker News</button>
+      <button class="chip" data-source="DEV Community">DEV</button>
+    </section>
+
+    <section id="feed" class="feed" aria-live="polite"></section>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
