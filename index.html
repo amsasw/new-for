@@ -5,26 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b0d10" />
   <title>Hot Cache Hub</title>
-  <meta id="metaDescription" name="description" content="每天更新一次缓存的热点聚合页" />
+  <meta id="metaDescription" name="description" content="中国、美国、日本、韩国的每日热点新闻聚合" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <main class="shell">
     <div class="topbar">
       <a class="brand" href="./" aria-label="Hot Cache Hub">HCH</a>
-      <div class="language-switcher" role="group" aria-label="Language">
-        <button class="lang-btn active" data-lang="zh" aria-pressed="true">中</button>
-        <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
-        <button class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
-        <button class="lang-btn" data-lang="ko" aria-pressed="false">한국어</button>
+      <div class="country-switcher" role="group" aria-label="Country news">
+        <button class="country-btn active" data-country="CN" aria-pressed="true">🇨🇳 中国</button>
+        <button class="country-btn" data-country="US" aria-pressed="false">🇺🇸 USA</button>
+        <button class="country-btn" data-country="JP" aria-pressed="false">🇯🇵 日本</button>
+        <button class="country-btn" data-country="KR" aria-pressed="false">🇰🇷 한국</button>
       </div>
     </div>
 
     <header class="hero">
       <div class="hero-copy">
-        <div class="eyebrow">DAILY CACHE FEED</div>
-        <h1 id="pageTitle">最新热点</h1>
-        <p id="pageDescription">每 24 小时生成一次缓存；抓取失败时继续展示上次成功缓存。</p>
+        <div class="eyebrow" id="eyebrow">CHINA · DAILY NEWS</div>
+        <h1 id="pageTitle">中国热点</h1>
+        <p id="pageDescription">每天生成一次新闻缓存；切换国家即可查看对应地区的本地化热点。</p>
       </div>
       <button id="refreshBtn" class="refresh" type="button">重新读取缓存</button>
     </header>
@@ -40,19 +40,14 @@
 
     <section class="controls" aria-label="Feed controls">
       <label class="search">
-        <span class="sr-only" id="searchLabel">搜索热点</span>
+        <span class="sr-only" id="searchLabel">搜索新闻</span>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/>
         </svg>
-        <input id="searchInput" type="search" autocomplete="off" placeholder="搜索标题、作者或来源…" aria-labelledby="searchLabel" />
+        <input id="searchInput" type="search" autocomplete="off" placeholder="搜索标题或媒体来源…" aria-labelledby="searchLabel" />
         <kbd>/</kbd>
       </label>
-
-      <div class="toolbar" role="group" aria-label="Sources">
-        <button class="chip active" data-source="all" id="allSourceBtn" aria-pressed="true">全部</button>
-        <button class="chip" data-source="Hacker News" aria-pressed="false">Hacker News</button>
-        <button class="chip" data-source="DEV Community" aria-pressed="false">DEV</button>
-      </div>
+      <div id="countryBadge" class="country-badge">🇨🇳 中国</div>
     </section>
 
     <section id="feed" class="feed" aria-live="polite" aria-busy="true"></section>
