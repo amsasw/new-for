@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b0d10" />
   <title>Hot Cache Hub</title>
-  <meta id="metaDescription" name="description" content="中国、美国、日本、韩国的每日热点新闻聚合" />
+  <meta id="metaDescription" name="description" content="中国、美国、日本、韩国的科技、编程、开源与开发者资讯聚合" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <main class="shell">
     <div class="topbar">
       <a class="brand" href="./" aria-label="Hot Cache Hub">HCH</a>
-      <div class="country-switcher" role="group" aria-label="Country news">
+      <div class="country-switcher" role="group" aria-label="Country tech feeds">
         <button class="country-btn active" data-country="CN" aria-pressed="true">🇨🇳 中国</button>
         <button class="country-btn" data-country="US" aria-pressed="false">🇺🇸 USA</button>
         <button class="country-btn" data-country="JP" aria-pressed="false">🇯🇵 日本</button>
@@ -22,9 +22,9 @@
 
     <header class="hero">
       <div class="hero-copy">
-        <div class="eyebrow" id="eyebrow">CHINA · DAILY NEWS</div>
-        <h1 id="pageTitle">中国热点</h1>
-        <p id="pageDescription">每天生成一次新闻缓存；切换国家即可查看对应地区的本地化热点。</p>
+        <div class="eyebrow" id="eyebrow">CHINA · TECH & CODE</div>
+        <h1 id="pageTitle">中国技术资讯</h1>
+        <p id="pageDescription">聚合中国科技、编程、开源、AI、云计算和开发者工具相关内容，每 24 小时更新一次缓存。</p>
       </div>
       <button id="refreshBtn" class="refresh" type="button">重新读取缓存</button>
     </header>
@@ -40,20 +40,20 @@
 
     <section class="controls" aria-label="Feed controls">
       <label class="search">
-        <span class="sr-only" id="searchLabel">搜索新闻</span>
+        <span class="sr-only" id="searchLabel">搜索技术资讯</span>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/>
         </svg>
-        <input id="searchInput" type="search" autocomplete="off" placeholder="搜索标题或媒体来源…" aria-labelledby="searchLabel" />
+        <input id="searchInput" type="search" autocomplete="off" placeholder="搜索编程、AI、开源或媒体来源…" aria-labelledby="searchLabel" />
         <kbd>/</kbd>
       </label>
-      <div id="countryBadge" class="country-badge">🇨🇳 中国</div>
+      <div id="countryBadge" class="country-badge">🇨🇳 中国 · Tech</div>
     </section>
 
     <section id="feed" class="feed" aria-live="polite" aria-busy="true"></section>
 
     <footer class="footer">
-      <span>Hot Cache Hub</span>
+      <span>Hot Cache Hub · Tech & Code</span>
       <a href="https://github.com/amsasw/new-for" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
     </footer>
   </main>
