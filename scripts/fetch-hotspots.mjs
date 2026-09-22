@@ -2,33 +2,55 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const output = new URL('../data/hotspots.json', import.meta.url);
 const timeoutMs = Number(process.env.FETCH_TIMEOUT_MS || 12000);
-const userAgent = process.env.USER_AGENT || 'HotCacheHub/2.0 (+https://github.com/amsasw/new-for)';
+const userAgent = process.env.USER_AGENT || 'HotCacheHub/3.0 (+https://github.com/amsasw/new-for)';
 
 const COUNTRIES = [
   {
     code: 'CN',
     name: 'China',
-    feed: 'https://news.google.com/rss?hl=zh-CN&gl=CN&ceid=CN:zh-Hans'
+    hl: 'zh-CN',
+    gl: 'CN',
+    ceid: 'CN:zh-Hans',
+    query: '编程 OR 开源 OR 软件开发 OR GitHub OR 人工智能 OR AI OR 云计算 OR 开发者'
   },
   {
     code: 'US',
     name: 'United States',
-    feed: 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en'
+    hl: 'en-US',
+    gl: 'US',
+    ceid: 'US:en',
+    query: 'programming OR open source OR software engineering OR GitHub OR AI OR cloud computing OR developer tools'
   },
   {
     code: 'JP',
     name: 'Japan',
-    feed: 'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja'
+    hl: 'ja',
+    gl: 'JP',
+    ceid: 'JP:ja',
+    query: 'プログラミング OR オープンソース OR ソフトウェア開発 OR GitHub OR AI OR クラウド OR 開発者'
   },
   {
     code: 'KR',
     name: 'South Korea',
-    feed: 'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko'
+    hl: 'ko',
+    gl: 'KR',
+    ceid: 'KR:ko',
+    query: '프로그래밍 OR 오픈소스 OR 소프트웨어 개발 OR GitHub OR AI OR 클라우드 OR 개발자'
   }
 ];
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const nowIso = () => new Date().toISOString();
+
+function techFeed(country) {
+  const params = new URLSearchParams({
+    q: `${country.query} when:7d`,
+    hl: country.hl,
+    gl: country.gl,
+    ceid: country.ceid
+  });
+  return `https://news.google.com/rss/search?${params.toString()}`;
+}
 
 async function fetchText(url, retries = 1) {
   let lastError;
@@ -87,9 +109,7 @@ function stripHtml(value = '') {
       .replace(/<script[\s\S]*?<\/script>/gi, ' ')
       .replace(/<style[\s\S]*?<\/style>/gi, ' ')
       .replace(/<[^>]+>/g, ' ')
-  )
-    .replace(/\s+/g, ' ')
-    .trim();
+  ).replace(/\s+/g, ' ').trim();
 }
 
 function imageFromDescription(value = '') {
@@ -105,7 +125,7 @@ function normalizeTitle(title, source) {
 
 function parseFeed(xml, country) {
   const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || [];
-  return blocks.slice(0, 30).map((block, index) => {
+  return blocks.slice(0, 36).map((block, index) => {
     const source = tag(block, 'source') || 'Google News';
     const title = normalizeTitle(tag(block, 'title'), source);
     const link = tag(block, 'link');
@@ -113,35 +133,31 @@ function parseFeed(xml, country) {
     const pubDate = tag(block, 'pubDate');
     const descriptionRaw = rawTag(block, 'description');
     const summaryText = stripHtml(descriptionRaw);
-    const summary = summaryText && summaryText !== title
-      ? summaryText.slice(0, 260)
-      : '';
-
-    let publishedAt;
+    const summary = summaryText && summaryText !== title ? summaryText.slice(0, 280) : '';
     const parsed = Date.parse(pubDate);
-    if (Number.isFinite(parsed)) publishedAt = new Date(parsed).toISOString();
-    else publishedAt = nowIso();
 
     return {
       id: `${country.code}-${Buffer.from(guid).toString('base64url').slice(0, 24)}`,
       country: country.code,
+      topic: 'tech-code',
       source,
       sourceUrl: sourceUrl(block) || null,
       title,
       summary,
       url: link,
       author: source,
-      publishedAt,
+      publishedAt: Number.isFinite(parsed) ? new Date(parsed).toISOString() : nowIso(),
       image: imageFromDescription(descriptionRaw),
+      tags: ['tech', 'programming', 'open-source', 'ai', 'developer'],
       rank: index + 1
     };
   }).filter(item => item.title && item.url);
 }
 
 async function fetchCountry(country) {
-  const xml = await fetchText(country.feed);
+  const xml = await fetchText(techFeed(country));
   const items = parseFeed(xml, country);
-  if (!items.length) throw new Error('Feed returned no usable items');
+  if (!items.length) throw new Error('Tech feed returned no usable items');
   return items;
 }
 
@@ -155,7 +171,7 @@ async function readPrevious() {
 
 function previousForCountry(previous, code) {
   return Array.isArray(previous?.items)
-    ? previous.items.filter(item => item.country === code)
+    ? previous.items.filter(item => item.country === code && item.topic === 'tech-code')
     : [];
 }
 
@@ -177,6 +193,7 @@ settled.forEach((result, index) => {
     countries.push({
       code: country.code,
       name: country.name,
+      topic: 'tech-code',
       ok: true,
       stale: false,
       count: result.value.length,
@@ -194,6 +211,7 @@ settled.forEach((result, index) => {
   countries.push({
     code: country.code,
     name: country.name,
+    topic: 'tech-code',
     ok: false,
     stale: fallback.length > 0,
     count: fallback.length,
@@ -203,13 +221,14 @@ settled.forEach((result, index) => {
       null,
     error: result.status === 'rejected'
       ? String(result.reason?.message || result.reason)
-      : 'Feed returned no usable items'
+      : 'Tech feed returned no usable items'
   });
 });
 
 const payload = {
   meta: {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    topic: 'tech-code',
     updatedAt: freshCountryCount > 0 ? attemptAt : previous?.meta?.updatedAt || attemptAt,
     lastAttemptAt: attemptAt,
     servedStale: usedStaleCountry || freshCountryCount < COUNTRIES.length,
@@ -225,5 +244,5 @@ await mkdir(new URL('../data/', import.meta.url), { recursive: true });
 await writeFile(output, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 
 console.log(
-  `Wrote ${payload.items.length} items for ${freshCountryCount}/${COUNTRIES.length} fresh countries`
+  `Wrote ${payload.items.length} developer/tech items for ${freshCountryCount}/${COUNTRIES.length} fresh countries`
 );
