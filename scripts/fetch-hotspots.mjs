@@ -1,18 +1,36 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const output = new URL('../data/hotspots.json', import.meta.url);
-const timeoutMs = Number(process.env.FETCH_TIMEOUT_MS || 10000);
-const userAgent = process.env.USER_AGENT || 'HotCacheHub/1.1 (+https://github.com/amsasw/new-for)';
+const timeoutMs = Number(process.env.FETCH_TIMEOUT_MS || 12000);
+const userAgent = process.env.USER_AGENT || 'HotCacheHub/2.0 (+https://github.com/amsasw/new-for)';
 
-const SOURCES = [
-  { name: 'Hacker News', load: fetchHackerNews },
-  { name: 'DEV Community', load: fetchDev }
+const COUNTRIES = [
+  {
+    code: 'CN',
+    name: 'China',
+    feed: 'https://news.google.com/rss?hl=zh-CN&gl=CN&ceid=CN:zh-Hans'
+  },
+  {
+    code: 'US',
+    name: 'United States',
+    feed: 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en'
+  },
+  {
+    code: 'JP',
+    name: 'Japan',
+    feed: 'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja'
+  },
+  {
+    code: 'KR',
+    name: 'South Korea',
+    feed: 'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko'
+  }
 ];
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const nowIso = () => new Date().toISOString();
 
-async function fetchJson(url, retries = 1) {
+async function fetchText(url, retries = 1) {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
@@ -20,13 +38,16 @@ async function fetchJson(url, retries = 1) {
     try {
       const response = await fetch(url, {
         signal: controller.signal,
-        headers: { 'user-agent': userAgent, accept: 'application/json' }
+        headers: {
+          'user-agent': userAgent,
+          accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8'
+        }
       });
       if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-      return await response.json();
+      return await response.text();
     } catch (error) {
       lastError = error;
-      if (attempt < retries) await sleep(400 * (attempt + 1));
+      if (attempt < retries) await sleep(500 * (attempt + 1));
     } finally {
       clearTimeout(timer);
     }
@@ -34,86 +55,94 @@ async function fetchJson(url, retries = 1) {
   throw lastError;
 }
 
-async function fetchHackerNews() {
-  const ids = await fetchJson('https://hacker-news.firebaseio.com/v0/topstories.json');
-  const results = await Promise.allSettled(
-    ids.slice(0, 24).map(id =>
-      fetchJson(`https://hacker-news.firebaseio.com/v0/item/${id}.json`, 0)
-    )
-  );
-
-  return results
-    .filter(result => result.status === 'fulfilled')
-    .map(result => result.value)
-    .filter(item => item?.type === 'story' && item.title)
-    .slice(0, 20)
-    .map(item => ({
-      id: `hn-${item.id}`,
-      source: 'Hacker News',
-      title: item.title,
-      summary: `${item.score || 0} points · ${item.descendants || 0} comments`,
-      url: item.url || `https://news.ycombinator.com/item?id=${item.id}`,
-      discussionUrl: `https://news.ycombinator.com/item?id=${item.id}`,
-      author: item.by || 'unknown',
-      publishedAt: new Date((item.time || 0) * 1000).toISOString(),
-      image: null,
-      rawScore: Number(item.score || 0)
-    }));
+function decodeXml(value = '') {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 }
 
-async function fetchDev() {
-  const articles = await fetchJson('https://dev.to/api/articles?top=1&per_page=20');
-  return articles.map(article => ({
-    id: `dev-${article.id}`,
-    source: 'DEV Community',
-    title: article.title,
-    summary: article.description || `${article.comments_count || 0} comments`,
-    url: article.url,
-    discussionUrl: article.url,
-    author: article.user?.name || article.user?.username || 'unknown',
-    publishedAt: article.published_timestamp || article.published_at || nowIso(),
-    image: article.cover_image || article.social_image || null,
-    rawScore:
-      Number(article.public_reactions_count || article.positive_reactions_count || 0) +
-      Number(article.comments_count || 0) * 2
-  }));
+function rawTag(block, name) {
+  const match = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, 'i'));
+  return match ? match[1].trim() : '';
 }
 
-function dedupe(items) {
-  const seen = new Set();
-  return items.filter(item => {
-    const key = item.url || `${item.source}:${item.title}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+function tag(block, name) {
+  return decodeXml(rawTag(block, name)).trim();
 }
 
-function rankItems(items) {
-  const groups = new Map();
-  for (const item of items) {
-    if (!groups.has(item.source)) groups.set(item.source, []);
-    groups.get(item.source).push(item);
-  }
+function sourceUrl(block) {
+  const match = block.match(/<source\s+[^>]*url=["']([^"']+)["'][^>]*>/i);
+  return match ? decodeXml(match[1]) : '';
+}
 
-  const scored = [];
-  for (const group of groups.values()) {
-    const max = Math.max(1, ...group.map(item => Number(item.rawScore || 0)));
-    for (const item of group) {
-      const published = Date.parse(item.publishedAt || '');
-      const ageHours = Number.isFinite(published)
-        ? Math.max(0, (Date.now() - published) / 3600000)
-        : 72;
-      const freshness = Math.max(0, 1 - ageHours / 72);
-      const popularity = Number(item.rawScore || 0) / max;
-      scored.push({ ...item, rankScore: popularity * 0.72 + freshness * 0.28 });
-    }
-  }
+function stripHtml(value = '') {
+  return decodeXml(
+    value
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+  )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-  return scored
-    .sort((a, b) => b.rankScore - a.rankScore)
-    .slice(0, 40)
-    .map(({ rawScore, rankScore, ...item }) => item);
+function imageFromDescription(value = '') {
+  const match = value.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match ? decodeXml(match[1]) : null;
+}
+
+function normalizeTitle(title, source) {
+  if (!source) return title;
+  const suffix = ` - ${source}`;
+  return title.endsWith(suffix) ? title.slice(0, -suffix.length).trim() : title;
+}
+
+function parseFeed(xml, country) {
+  const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || [];
+  return blocks.slice(0, 30).map((block, index) => {
+    const source = tag(block, 'source') || 'Google News';
+    const title = normalizeTitle(tag(block, 'title'), source);
+    const link = tag(block, 'link');
+    const guid = tag(block, 'guid') || link || `${country.code}-${index}`;
+    const pubDate = tag(block, 'pubDate');
+    const descriptionRaw = rawTag(block, 'description');
+    const summaryText = stripHtml(descriptionRaw);
+    const summary = summaryText && summaryText !== title
+      ? summaryText.slice(0, 260)
+      : '';
+
+    let publishedAt;
+    const parsed = Date.parse(pubDate);
+    if (Number.isFinite(parsed)) publishedAt = new Date(parsed).toISOString();
+    else publishedAt = nowIso();
+
+    return {
+      id: `${country.code}-${Buffer.from(guid).toString('base64url').slice(0, 24)}`,
+      country: country.code,
+      source,
+      sourceUrl: sourceUrl(block) || null,
+      title,
+      summary,
+      url: link,
+      author: source,
+      publishedAt,
+      image: imageFromDescription(descriptionRaw),
+      rank: index + 1
+    };
+  }).filter(item => item.title && item.url);
+}
+
+async function fetchCountry(country) {
+  const xml = await fetchText(country.feed);
+  const items = parseFeed(xml, country);
+  if (!items.length) throw new Error('Feed returned no usable items');
+  return items;
 }
 
 async function readPrevious() {
@@ -124,80 +153,77 @@ async function readPrevious() {
   }
 }
 
-function previousForSource(previous, source) {
-  const items = Array.isArray(previous?.items)
-    ? previous.items.filter(item => item.source === source)
+function previousForCountry(previous, code) {
+  return Array.isArray(previous?.items)
+    ? previous.items.filter(item => item.country === code)
     : [];
-
-  return items.map((item, index) => ({
-    ...item,
-    rawScore: Math.max(1, items.length - index)
-  }));
 }
 
 const previous = await readPrevious();
 const attemptAt = nowIso();
-const settled = await Promise.allSettled(SOURCES.map(source => source.load()));
+const settled = await Promise.allSettled(COUNTRIES.map(fetchCountry));
 
 const items = [];
-const sources = [];
-let freshSourceCount = 0;
-let usedStaleSource = false;
+const countries = [];
+let freshCountryCount = 0;
+let usedStaleCountry = false;
 
 settled.forEach((result, index) => {
-  const source = SOURCES[index];
+  const country = COUNTRIES[index];
 
   if (result.status === 'fulfilled' && result.value.length > 0) {
-    freshSourceCount += 1;
+    freshCountryCount += 1;
     items.push(...result.value);
-    sources.push({
-      name: source.name,
+    countries.push({
+      code: country.code,
+      name: country.name,
       ok: true,
       stale: false,
-      count: result.value.length
+      count: result.value.length,
+      updatedAt: attemptAt
     });
     return;
   }
 
-  const fallback = previousForSource(previous, source.name);
+  const fallback = previousForCountry(previous, country.code);
   if (fallback.length) {
-    usedStaleSource = true;
+    usedStaleCountry = true;
     items.push(...fallback);
   }
 
-  sources.push({
-    name: source.name,
+  countries.push({
+    code: country.code,
+    name: country.name,
     ok: false,
     stale: fallback.length > 0,
     count: fallback.length,
+    updatedAt:
+      previous?.meta?.countries?.find(item => item.code === country.code)?.updatedAt ||
+      previous?.meta?.updatedAt ||
+      null,
     error: result.status === 'rejected'
       ? String(result.reason?.message || result.reason)
-      : 'Source returned no usable items'
+      : 'Feed returned no usable items'
   });
 });
 
-const ranked = rankItems(dedupe(items));
-const allSourcesFailed = freshSourceCount === 0;
-const updatedAt = allSourcesFailed && previous?.meta?.updatedAt
-  ? previous.meta.updatedAt
-  : attemptAt;
-
 const payload = {
   meta: {
-    updatedAt,
+    schemaVersion: 2,
+    updatedAt: freshCountryCount > 0 ? attemptAt : previous?.meta?.updatedAt || attemptAt,
     lastAttemptAt: attemptAt,
-    servedStale: usedStaleSource || allSourcesFailed,
+    servedStale: usedStaleCountry || freshCountryCount < COUNTRIES.length,
     refreshIntervalHours: 24,
-    sourceCount: SOURCES.length,
-    freshSourceCount,
-    sources
+    countryCount: COUNTRIES.length,
+    freshCountryCount,
+    countries
   },
-  items: ranked
+  items
 };
 
 await mkdir(new URL('../data/', import.meta.url), { recursive: true });
 await writeFile(output, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 
 console.log(
-  `Wrote ${payload.items.length} items (${freshSourceCount}/${SOURCES.length} fresh sources) to data/hotspots.json`
+  `Wrote ${payload.items.length} items for ${freshCountryCount}/${COUNTRIES.length} fresh countries`
 );
