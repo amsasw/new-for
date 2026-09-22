@@ -1,4 +1,4 @@
-name: Refresh hotspots and deploy Pages
+name: Refresh country news and deploy Pages
 
 on:
   push:
@@ -31,24 +31,35 @@ jobs:
           node-version: 22
 
       - name: Restore last successful cache
-        id: cache-restore
         uses: actions/cache/restore@v4
         with:
           path: data/hotspots.json
-          key: hotspots-${{ github.run_id }}
+          key: country-news-${{ github.run_id }}
           restore-keys: |
+            country-news-
             hotspots-
 
-      - name: Refresh hotspots
-        if: github.event_name != 'push'
+      - name: Check whether cache migration is required
+        id: schema
+        shell: bash
+        run: |
+          VERSION="$(node -e "try{const j=require('./data/hotspots.json');process.stdout.write(String(j.meta?.schemaVersion||0))}catch{process.stdout.write('0')}")"
+          if [ "$VERSION" != "2" ]; then
+            echo "refresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "refresh=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh country news
+        if: github.event_name != 'push' || steps.schema.outputs.refresh == 'true'
         run: npm run refresh
 
       - name: Save refreshed cache
-        if: github.event_name != 'push'
+        if: github.event_name != 'push' || steps.schema.outputs.refresh == 'true'
         uses: actions/cache/save@v4
         with:
           path: data/hotspots.json
-          key: hotspots-${{ github.run_id }}
+          key: country-news-${{ github.run_id }}
 
       - name: Build static site
         run: npm run build
