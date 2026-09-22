@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b0d10" />
   <title>Hot Cache Hub</title>
   <meta id="metaDescription" name="description" content="每天更新一次缓存的热点聚合页" />
   <link rel="stylesheet" href="./styles.css" />
@@ -10,36 +11,56 @@
 <body>
   <main class="shell">
     <div class="topbar">
+      <a class="brand" href="./" aria-label="Hot Cache Hub">HCH</a>
       <div class="language-switcher" role="group" aria-label="Language">
-        <button class="lang-btn active" data-lang="zh">中</button>
-        <button class="lang-btn" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="ja">日本語</button>
-        <button class="lang-btn" data-lang="ko">한국어</button>
+        <button class="lang-btn active" data-lang="zh" aria-pressed="true">中</button>
+        <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+        <button class="lang-btn" data-lang="ja" aria-pressed="false">日本語</button>
+        <button class="lang-btn" data-lang="ko" aria-pressed="false">한국어</button>
       </div>
     </div>
 
     <header class="hero">
-      <div>
+      <div class="hero-copy">
         <div class="eyebrow">DAILY CACHE FEED</div>
         <h1 id="pageTitle">最新热点</h1>
         <p id="pageDescription">每 24 小时生成一次缓存；抓取失败时继续展示上次成功缓存。</p>
       </div>
-      <button id="refreshBtn" class="refresh">重新读取缓存</button>
+      <button id="refreshBtn" class="refresh" type="button">重新读取缓存</button>
     </header>
 
-    <section class="statusbar">
-      <span id="statusDot" class="dot"></span>
+    <section class="statusbar" aria-live="polite">
+      <span id="statusDot" class="dot" aria-hidden="true"></span>
       <span id="statusText">正在读取缓存…</span>
+      <span class="status-separator" aria-hidden="true">·</span>
       <span id="updatedAt" class="muted"></span>
+      <span class="status-separator" aria-hidden="true">·</span>
+      <span id="resultCount" class="muted"></span>
     </section>
 
-    <section class="toolbar">
-      <button class="chip active" data-source="all" id="allSourceBtn">全部</button>
-      <button class="chip" data-source="Hacker News">Hacker News</button>
-      <button class="chip" data-source="DEV Community">DEV</button>
+    <section class="controls" aria-label="Feed controls">
+      <label class="search">
+        <span class="sr-only" id="searchLabel">搜索热点</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/>
+        </svg>
+        <input id="searchInput" type="search" autocomplete="off" placeholder="搜索标题、作者或来源…" aria-labelledby="searchLabel" />
+        <kbd>/</kbd>
+      </label>
+
+      <div class="toolbar" role="group" aria-label="Sources">
+        <button class="chip active" data-source="all" id="allSourceBtn" aria-pressed="true">全部</button>
+        <button class="chip" data-source="Hacker News" aria-pressed="false">Hacker News</button>
+        <button class="chip" data-source="DEV Community" aria-pressed="false">DEV</button>
+      </div>
     </section>
 
-    <section id="feed" class="feed" aria-live="polite"></section>
+    <section id="feed" class="feed" aria-live="polite" aria-busy="true"></section>
+
+    <footer class="footer">
+      <span>Hot Cache Hub</span>
+      <a href="https://github.com/amsasw/new-for" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+    </footer>
   </main>
   <script type="module" src="./app.js"></script>
 </body>
